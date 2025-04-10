@@ -1,0 +1,89 @@
+import llama_cpp
+import json
+import os
+import re
+
+# Lade das Llama-Modell
+llm = llama_cpp.Llama(model_path="model.gguf", n_ctx=2048)
+
+# Definition der 17 UN-Nachhaltigkeitsziele mit Schlüsselwörtern
+sdgs = [
+    {
+        "id": 1,
+        "name": "Keine Armut",
+        "description": "Armut in all ihren Formen und überall beenden.",
+        "keywords": ["soziale Sicherheit", "Grundversorgung", "Einkommensverteilung"]
+    },
+    {
+        "id": 2,
+        "name": "Kein Hunger",
+        "description": "Den Hunger beenden und nachhaltige Landwirtschaft fördern.",
+        "keywords": ["Ernährungssicherheit", "Agrarproduktion", "Lebensmittelverschwendung"]
+    },
+    # ... weitere SDGs ...
+]
+
+def evaluate_patent(patent_text):
+    """Analysiert ein Patent auf Übereinstimmung mit den UN-Nachhaltigkeitszielen."""
+    relevant_sdgs = []
+    scores = []
+    
+    # Prompt zusammenstellen
+    prompt = f"""
+    Analysiere den folgenden Patenttext auf Übereinstimmung mit den 17 UN-Nachhaltigkeitszielen:
+    
+    Patenttext:
+    {patent_text}
+    
+    Für jedes der folgenden Ziele, bewerte die Relevanz von 0-10 und begründe kurz:
+    """
+    
+    for sdg in sdgs:
+        prompt += f"\n{sdg['id']}. {sdg['name']}: {sdg['description']} [Schlüsselwörter: {', '.join(sdg['keywords'])}]"
+    
+    # KI-Anfrage durchführen
+    response = llm(prompt, max_tokens=2000, temperature=0.1)
+    
+    # Hier könnte eine Parsing-Logik für die Antwort implementiert werden
+    
+    return response['choices'][^1_0]['text']
+
+def main():
+    """Hauptfunktion für den Patentanalyse-Chatbot."""
+    print("Patentanalyse-Tool für die 17 UN-Nachhaltigkeitsziele")
+    print("-----------------------------------------------------")
+    
+    while True:
+        print("\nOptionen:")
+        print("1. Patenttext analysieren")
+        print("2. Patentdatei analysieren")
+        print("3. Beenden")
+        
+        choice = input("\nWählen Sie eine Option (1-3): ")
+        
+        if choice == "1":
+            patent_text = input("\nGeben Sie den Patenttext ein:\n")
+            results = evaluate_patent(patent_text)
+            print("\nAnalyseergebnisse:")
+            print(results)
+        
+        elif choice == "2":
+            filepath = input("\nDateipfad zur Patentdatei: ")
+            try:
+                with open(filepath, 'r', encoding='utf-8') as file:
+                    patent_text = file.read()
+                results = evaluate_patent(patent_text)
+                print("\nAnalyseergebnisse:")
+                print(results)
+            except Exception as e:
+                print(f"Fehler beim Lesen der Datei: {e}")
+        
+        elif choice == "3":
+            print("\nProgramm wird beendet.")
+            break
+        
+        else:
+            print("\nUngültige Eingabe. Bitte wählen Sie 1, 2 oder 3.")
+
+if __name__ == "__main__":
+    main()
